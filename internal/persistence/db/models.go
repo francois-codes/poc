@@ -5,7 +5,6 @@
 package db
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -15,12 +14,12 @@ type Datamodel struct {
 }
 
 type Version struct {
-	ID         int64           `json:"id"`
-	ObjectType string          `json:"object_type"`
-	ObjectID   int64           `json:"object_id"`
-	Json       json.RawMessage `json:"json"`
-	Version    int32           `json:"version"`
-	Action     string          `json:"action"`
-	Actor      string          `json:"actor"`
-	CreatedAt  time.Time       `json:"created_at"`
+	ID         int64     `json:"id"`
+	ObjectType string    `json:"object_type"`
+	ObjectID   int64     `json:"object_id"`
+	Json       []byte    `json:"json"`
+	Version    int32     `json:"version"`
+	Action     string    `json:"action"`
+	Actor      string    `json:"actor"`
+	CreatedAt  time.Time `json:"created_at"`
 }

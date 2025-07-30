@@ -7,7 +7,7 @@ package db
 
 import (
 	"context"
-	"encoding/json"
+	"time"
 )
 
 const createDatamodel = `-- name: CreateDatamodel :one
@@ -17,9 +17,49 @@ VALUES ($1)
 `
 
 func (q *Queries) CreateDatamodel(ctx context.Context, name string) (Datamodel, error) {
-	row := q.db.QueryRowContext(ctx, createDatamodel, name)
+	row := q.db.QueryRow(ctx, createDatamodel, name)
 	var i Datamodel
 	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const createVersion = `-- name: CreateVersion :one
+INSERT INTO version (object_type, object_id, json, version, action, actor, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, object_type, object_id, json, version, action, actor, created_at
+`
+
+type CreateVersionParams struct {
+	ObjectType string    `json:"object_type"`
+	ObjectID   int64     `json:"object_id"`
+	Json       []byte    `json:"json"`
+	Version    int32     `json:"version"`
+	Action     string    `json:"action"`
+	Actor      string    `json:"actor"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+func (q *Queries) CreateVersion(ctx context.Context, arg CreateVersionParams) (Version, error) {
+	row := q.db.QueryRow(ctx, createVersion,
+		arg.ObjectType,
+		arg.ObjectID,
+		arg.Json,
+		arg.Version,
+		arg.Action,
+		arg.Actor,
+		arg.CreatedAt,
+	)
+	var i Version
+	err := row.Scan(
+		&i.ID,
+		&i.ObjectType,
+		&i.ObjectID,
+		&i.Json,
+		&i.Version,
+		&i.Action,
+		&i.Actor,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -29,23 +69,45 @@ WHERE id = $1
 `
 
 func (q *Queries) DeleteDatamodel(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteDatamodel, id)
+	_, err := q.db.Exec(ctx, deleteDatamodel, id)
 	return err
 }
 
 const getDatamodel = `-- name: GetDatamodel :one
 SELECT json
 FROM version
-WHERE object_id = 123 AND object_type = 'datamodel'
+WHERE object_id = $1 AND object_type = 'datamodel'
 ORDER BY version DESC
 LIMIT 1
 `
 
-func (q *Queries) GetDatamodel(ctx context.Context) (json.RawMessage, error) {
-	row := q.db.QueryRowContext(ctx, getDatamodel)
-	var json json.RawMessage
+func (q *Queries) GetDatamodel(ctx context.Context, objectID int64) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getDatamodel, objectID)
+	var json []byte
 	err := row.Scan(&json)
 	return json, err
+}
+
+const getVersionByID = `-- name: GetVersionByID :one
+SELECT id, object_type, object_id, json, version, action, actor, created_at
+FROM version
+WHERE id = $1
+`
+
+func (q *Queries) GetVersionByID(ctx context.Context, id int64) (Version, error) {
+	row := q.db.QueryRow(ctx, getVersionByID, id)
+	var i Version
+	err := row.Scan(
+		&i.ID,
+		&i.ObjectType,
+		&i.ObjectID,
+		&i.Json,
+		&i.Version,
+		&i.Action,
+		&i.Actor,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const listDatamodels = `-- name: ListDatamodels :many
@@ -55,7 +117,7 @@ ORDER BY id
 `
 
 func (q *Queries) ListDatamodels(ctx context.Context) ([]Datamodel, error) {
-	rows, err := q.db.QueryContext(ctx, listDatamodels)
+	rows, err := q.db.Query(ctx, listDatamodels)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +130,46 @@ func (q *Queries) ListDatamodels(ctx context.Context) ([]Datamodel, error) {
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+	return items, nil
+}
+
+const listVersionsByObject = `-- name: ListVersionsByObject :many
+SELECT id, object_type, object_id, json, version, action, actor, created_at
+FROM version
+WHERE object_type = $1 AND object_id = $2
+ORDER BY version DESC
+`
+
+type ListVersionsByObjectParams struct {
+	ObjectType string `json:"object_type"`
+	ObjectID   int64  `json:"object_id"`
+}
+
+func (q *Queries) ListVersionsByObject(ctx context.Context, arg ListVersionsByObjectParams) ([]Version, error) {
+	rows, err := q.db.Query(ctx, listVersionsByObject, arg.ObjectType, arg.ObjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Version
+	for rows.Next() {
+		var i Version
+		if err := rows.Scan(
+			&i.ID,
+			&i.ObjectType,
+			&i.ObjectID,
+			&i.Json,
+			&i.Version,
+			&i.Action,
+			&i.Actor,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -90,7 +190,7 @@ type UpdateDatamodelParams struct {
 }
 
 func (q *Queries) UpdateDatamodel(ctx context.Context, arg UpdateDatamodelParams) (Datamodel, error) {
-	row := q.db.QueryRowContext(ctx, updateDatamodel, arg.ID, arg.Name)
+	row := q.db.QueryRow(ctx, updateDatamodel, arg.ID, arg.Name)
 	var i Datamodel
 	err := row.Scan(&i.ID, &i.Name)
 	return i, err

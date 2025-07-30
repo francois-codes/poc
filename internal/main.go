@@ -1,32 +1,64 @@
 package main
 
 import (
+	"cognyx/psychic-robot/json"
+	"cognyx/psychic-robot/persistence/db"
+	"cognyx/psychic-robot/persistence/repository"
 	"context"
-	fiber "github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
+	"strconv"
 	"time"
 )
 
+const GENERATE = false
+
 func main() {
 
-	db := InitDB()
-	defer db.Close()
+	dbconn := InitDB()
+	defer dbconn.Close()
+
+	if GENERATE {
+		db.Generate(dbconn)
+	}
+	// Repository
+	queries := db.New(dbconn) // 👈 conversion pool → Queries
+	repo := repository.NewVersionRepository(queries)
 
 	app := fiber.New()
-
-	// Route simple avec accès à la DB
-	app.Get("/ping", func(c *fiber.Ctx) error {
-		var now string
-		err := db.QueryRow(c.Context(), "SELECT NOW()").Scan(&now)
+	app.Get("/datamodel/:id", func(c *fiber.Ctx) error {
+		t := time.Now()
+		idStr := c.Params("id")
+		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			return c.Status(500).SendString("Erreur DB: " + err.Error())
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id invalide"})
 		}
-		return c.JSON(fiber.Map{"time": now})
+
+		jsonData, err := repo.GetLatestByDatamodelID(c.Context(), id)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Erreur base de données"})
+		}
+		log.Println(time.Since(t))
+		return c.Type("application/json").Send(jsonData)
 	})
 
-	log.Println("🚀 Serveur démarré sur http://localhost:3000")
-	log.Fatal(app.Listen(":3000"))
+	app.Get("/datamodel/update/:id", func(c *fiber.Ctx) error {
+		t := time.Now()
+		idStr := c.Params("id")
+		_, err := strconv.ParseInt(idStr, 10, 64) //TODO: change for DB JSON
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id invalide"})
+		}
+
+		jsonData, _ := json.CompareJSONFiles("/Users/thomas/go/poc/json/test1MB.json", "/Users/thomas/go/poc/json/test1MB_human.json")
+
+		log.Println(time.Since(t))
+		return c.Type("application/json").Send([]byte(jsonData))
+	})
+
+	log.Println("🚀 Serveur démarré sur http://localhost:8585")
+	log.Fatal(app.Listen(":8585"))
 }
 
 func InitDB() *pgxpool.Pool {
