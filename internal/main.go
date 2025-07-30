@@ -51,13 +51,13 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id invalide"})
 		}
 
-		jsonData, _ := json.CompareJSONFiles("/Users/thomas/go/poc/json/test1MB.json", "/Users/thomas/go/poc/json/test1MB_human.json")
+		jsonData, _ := json.CompareJSONFiles("/Users/thomas/go/poc/json/tree.json", "/Users/thomas/go/poc/json/tree2.json")
 
 		log.Println(time.Since(t))
 		return c.Type("application/json").Send([]byte(jsonData))
 	})
 
-	log.Println("🚀 Serveur démarré sur http://localhost:8585")
+	log.Println("🚀 Server started on http://localhost:8585")
 	log.Fatal(app.Listen(":8585"))
 }
 

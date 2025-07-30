@@ -122,7 +122,7 @@
     "name": "Dialè Meso",
     "language": "Sesotho sa Leboa",
     "id": "VBLI24FKF7VV6BWE",
-    "bio": "Maecenas non arcu nulla. Vivamus id faucibus velit, id posuere leo. Nullam sodales convallis mauris, sit amet lobortis magna auctor sit amet.",
+    "bio": "Maecenas non arcu nulla. Vivamus id faucibus velit, id posuere leo. Nullam sodales convallis mauris, sit amet lobortis magna auctor sit amet. Rajout.",
     "version": 6.29
   },
   {
@@ -22166,5 +22166,12 @@
     "id": "0CEPNRDV98KT3ORP",
     "bio": "Maecenas tempus neque ut porttitor malesuada. Phasellus massa ligula, hendrerit eget efficitur eget, tincidunt in ligula. Quisque mauris ligula, efficitur porttitor sodales ac, lacinia non ex. Maecenas quis nisi nunc.",
     "version": 2.69
+  },
+  {
+    "name": "Add an item",
+    "language": "english",
+    "id": "MYNEWID",
+    "bio": "Whatever I say.",
+    "version": 1.11
   }
 ]
