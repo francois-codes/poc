@@ -16,7 +16,8 @@ const (
 	numWorkers    = 10
 	minID         = 33
 	maxID         = 1032
-	baseURL       = "http://127.0.0.1:8585/datamodel/%d"
+	readURL       = "http://127.0.0.1:8585/datamodel/%d"
+	compareURL    = "http://127.0.0.1:8585/datamodel/update/%d"
 )
 
 func main() {
@@ -78,7 +79,7 @@ func main() {
 	fmt.Printf("   ➤ Slowest: %.0f µs\n", max)
 	fmt.Printf("   ➤ Average: %.0f µs\n", avg)
 	fmt.Printf("   ➤ P95:     %.0f µs\n", p95)
-	fmt.Printf("⚡ Total time: %.2fs\n", end)
+	//fmt.Printf("⚡ Total time: %.2fs\n", end)
 	fmt.Printf("🚀 QPS (Queries per second): %.2f\n", qps)
 }
 
@@ -87,7 +88,7 @@ func worker(jobs <-chan int, results chan<- time.Duration, wg *sync.WaitGroup) {
 
 	client := &http.Client{}
 	for id := range jobs {
-		url := fmt.Sprintf(baseURL, id)
+		url := fmt.Sprintf(readURL, id)
 		start := time.Now()
 		resp, err := client.Get(url)
 		elapsed := time.Since(start)

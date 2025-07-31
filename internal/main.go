@@ -25,6 +25,7 @@ func main() {
 	// Repository
 	queries := db.New(dbconn) // 👈 conversion pool → Queries
 	repo := repository.NewVersionRepository(queries)
+	userRepo := repository.NewUserRepository(queries)
 
 	app := fiber.New()
 	app.Get("/datamodel/:id", func(c *fiber.Ctx) error {
@@ -55,6 +56,43 @@ func main() {
 
 		log.Println(time.Since(t))
 		return c.Type("application/json").Send([]byte(jsonData))
+	})
+
+	app.Get("/datamodel/update2/:id", func(c *fiber.Ctx) error {
+		t := time.Now()
+		idStr := c.Params("id")
+		_, err := strconv.ParseInt(idStr, 10, 64) //TODO: change for DB JSON
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id invalide"})
+		}
+
+		jsonData, _ := json.NsfCompareJSONFiles("/Users/thomas/go/poc/json/tree.json", "/Users/thomas/go/poc/json/tree2.json")
+
+		log.Println(time.Since(t))
+		return c.Type("application/json").Send([]byte(jsonData))
+	})
+
+	// Example User endpoints
+	app.Get("/users", func(c *fiber.Ctx) error {
+		users, err := userRepo.List(c.Context())
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
+		}
+		return c.JSON(users)
+	})
+
+	app.Get("/users/:id", func(c *fiber.Ctx) error {
+		idStr := c.Params("id")
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+		}
+
+		user, err := userRepo.GetByID(c.Context(), id)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+		}
+		return c.JSON(user)
 	})
 
 	log.Println("🚀 Server started on http://localhost:8585")

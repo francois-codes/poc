@@ -9,3 +9,9 @@ func BenchmarkCompareJSONFiles(b *testing.B) {
 		CompareJSONFiles("/Users/thomas/go/poc/json/tree.json", "/Users/thomas/go/poc/json/tree2.json")
 	}
 }
+
+func BenchmarkNsfCompareJSONFiles(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		NsfCompareJSONFiles("/Users/thomas/go/poc/json/tree.json", "/Users/thomas/go/poc/json/tree2.json")
+	}
+}

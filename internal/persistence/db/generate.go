@@ -71,7 +71,6 @@ func insertDatamodelWithVersions(ctx context.Context, dbpool *pgxpool.Pool, q *Q
 			Version:    int32(v),
 			Action:     "update",
 			Actor:      "system",
-			CreatedAt:  time.Now(),
 		}
 
 		qtx.CreateVersion(ctx, version)
@@ -122,7 +121,6 @@ func Generate2(dbpool *pgxpool.Pool) {
 				Version:    int32(v),
 				Action:     "update",
 				Actor:      "system",
-				CreatedAt:  time.Now(),
 			}
 
 			if _, err := qtx.CreateVersion(ctx, version); err != nil {

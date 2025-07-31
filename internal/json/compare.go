@@ -3,6 +3,8 @@ package json
 import (
 	"encoding/json"
 	"fmt"
+	jsonpatch "github.com/evanphx/json-patch/v5"
+	nsf "github.com/nsf/jsondiff"
 	"os"
 
 	"github.com/wI2L/jsondiff"
@@ -31,6 +33,46 @@ func CompareJSONFiles(file1, file2 string) (string, error) {
 	// Comparer avec jsondiff
 	diff, _ := jsondiff.Compare(v1, v2)
 	return diff.String(), nil
+}
+
+func EvanPhxCompareJSONFiles(file1, file2 string) (string, error) {
+	// Lire les fichiers
+	json1, err := os.ReadFile(file1)
+	if err != nil {
+		return "", fmt.Errorf("error reading file1: %w", err)
+	}
+	json2, err := os.ReadFile(file2)
+	if err != nil {
+		return "", fmt.Errorf("error reading file2: %w", err)
+	}
+
+	// Comparer avec jsondiff
+	// Let's create a merge patch from these two documents...
+
+	patch, _ := jsonpatch.CreateMergePatch(json1, json2)
+	return string(patch), nil
+}
+
+func NsfCompareJSONFiles(file1, file2 string) (string, error) {
+	// Lire les fichiers
+	json1, err := os.ReadFile(file1)
+	if err != nil {
+		return "", fmt.Errorf("error reading file1: %w", err)
+	}
+	json2, err := os.ReadFile(file2)
+	if err != nil {
+		return "", fmt.Errorf("error reading file2: %w", err)
+	}
+
+	// Comparer avec jsondiff
+	// Let's create a merge patch from these two documents...
+
+	opts := &nsf.Options{
+		SkipMatches: true,
+		Indent:      "  ",
+	}
+	_, diff := nsf.Compare(json1, json2, opts)
+	return diff, nil
 }
 
 /*

@@ -21,3 +21,18 @@ type VersionRepository interface {
 	ListByObject(ctx context.Context, objectType string, objectID int64) ([]db.Version, error)
 	GetByID(ctx context.Context, id int64) (db.Version, error)
 }
+
+// Interface pour User
+type UserRepository interface {
+	Create(ctx context.Context, params db.CreateUserParams) (db.User, error)
+	GetByID(ctx context.Context, id int64) (db.User, error)
+	GetByEmail(ctx context.Context, email string) (db.User, error)
+	List(ctx context.Context) ([]db.User, error)
+	Update(ctx context.Context, params db.UpdateUserParams) (db.User, error)
+	UpdateStatus(ctx context.Context, params db.UpdateUserStatusParams) (db.User, error)
+	UpdateRole(ctx context.Context, params db.UpdateUserRoleParams) (db.User, error)
+	Delete(ctx context.Context, id int64) error
+	Count(ctx context.Context) (int64, error)
+	Search(ctx context.Context, params db.SearchUsersParams) ([]db.User, error)
+	Filter(ctx context.Context, params db.FilterUsersParams) ([]db.User, error)
+}
