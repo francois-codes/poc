@@ -54,6 +54,8 @@ This project implements a real-time user management system using NATS messaging 
 - **NATS Replication**: Direct connection to NATS server
 - **Real-time Sync**: Automatic synchronization across clients
 - **Port**: 3000
+- install dependencies with `pnpm install` at the root of the workspace
+- start the server with `pnpm run dev` at the root of the workspace
 
 ### 4. PostgreSQL Database
 - **Users Table**: Core user data (id, email, status, role)
@@ -143,9 +145,8 @@ Server starting on :8080
 ### 4. Start Frontend
 
 ```bash
-cd frontend
-npm install
-npm start
+pnpm install
+pnpm run dev
 ```
 
 Expected output:
