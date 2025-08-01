@@ -81,21 +81,23 @@ export function replicateNats<RxDocType>(
       const jsm = await nc.jetstreamManager();
 
     //   if (!await jsm.streams.get(options.streams.push)) {
-        await jsm.streams.add({
-          name: options.streams.push, subjects: [
-              options.subjectPrefix + '.push' + '.*'
-          ]
-        });
+        // await jsm.streams.add({
+        //   name: options.streams.push, subjects: [
+        //       options.subjectPrefix + '.push' + '.*'
+        //   ]
+        // });
     //   }
     //   if (!await jsm.streams.get(options.streams.pull)) {
-        await jsm.streams.add({
-          name: options.streams.pull, subjects: [
-              options.subjectPrefix + '.pull' + '.*'
-          ]
-        });
+        // await jsm.streams.add({
+        //   name: options.streams.pull, subjects: [
+        //       options.subjectPrefix + '.pull' + '.*'
+        //   ]
+        // });
     //   }
-      const natsStreamPull = await jetstreamClient.streams.get(options.streams.pull);
-      const natsStreamPush = await jetstreamClient.streams.get(options.streams.push);
+      const [natsStreamPull, natsStreamPush] = await Promise.all([
+        jetstreamClient.streams.get(options.streams.pull),
+        jetstreamClient.streams.get(options.streams.push)
+    ]);
       
       return {
           nc,

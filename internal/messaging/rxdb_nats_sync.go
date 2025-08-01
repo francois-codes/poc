@@ -14,6 +14,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill-nats/v2/pkg/nats"
 	"github.com/ThreeDotsLabs/watermill/message"
 	natsgo "github.com/nats-io/nats.go"
+	"github.com/rs/zerolog/log"
 )
 
 // RxDBDocument represents a document structure used by RxDB NATS replication
@@ -48,6 +49,8 @@ func NewRxDBNATSSync(
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to NATS: %w", err)
 	}
+
+	log.Printf("Connected to NATS")
 
 	// Create JetStream context
 	js, err := nc.JetStream()
