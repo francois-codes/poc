@@ -74,7 +74,9 @@ This project implements a real-time user management system using NATS messaging 
 
 **NATS with JetStream (RxDB Compatible):**
 ```bash
-docker run --rm --name rxdb-nats -p 4222:4222 nats:2.9.17 -js
+docker run --rm -d --name rxdb-nats-ws -p 4222:4222 -p 9222:9222 -v $(pwd)/nats-server.conf:/etc/nats/nats-server.conf nats:2.9.17 -js -c /etc/nats/nats-server.conf
+# to be removed if we're happy with the new command
+# docker run -d --name nats-jetstream -p 4222:4222 -p 8222:8222 nats:latest --jetstream
 ```
 
 **PostgreSQL:**

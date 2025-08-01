@@ -5,9 +5,9 @@ import { addRxPlugin } from 'rxdb/plugins/core';
 import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { replicateNats, RxNatsReplicationState } from "rxdb/plugins/replication-nats";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
+import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { wrappedValidateAjvStorage } from "rxdb/plugins/validate-ajv";
 import { onMounted, reactive, ref } from "vue";
-
 
 
 const userSchema = {
@@ -62,7 +62,8 @@ async function initRxDB() {
     logMessage("🔧 Creating RxDB database...");
     // addRxPlugin(RxDBDevModePlugin);
     addRxPlugin(RxDBQueryBuilderPlugin)
-
+    addRxPlugin(RxDBUpdatePlugin);
+    
     const storage = wrappedValidateAjvStorage({ storage: getRxStorageDexie() })
 
     database.value = await createRxDatabase({
@@ -107,7 +108,7 @@ async function startReplication() {
       replicationIdentifier: "users-replication",
       streamName: "USERS_BROADCAST",
       subjectPrefix: "users",
-      connection: { servers: "localhost:4222" },
+      connection: { servers: "ws://127.0.0.1:9222" },
       live: true,
       pull: { batchSize: 30 },
       push: { batchSize: 30 },
