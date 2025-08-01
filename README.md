@@ -72,7 +72,7 @@ This project implements a real-time user management system using NATS messaging 
 
 ### 1. Start Infrastructure Services
 
-**NATS with JetStream:**
+**NATS with JetStream (RxDB Compatible):**
 ```bash
 docker run --rm -d --name rxdb-nats-ws -p 4222:4222 -p 9222:9222 -v $(pwd)/nats-server.conf:/etc/nats/nats-server.conf nats:2.9.17 -js -c /etc/nats/nats-server.conf
 # to be removed if we're happy with the new command
@@ -275,7 +275,7 @@ CREATE TABLE version (
 ### NATS Connection Issues
 ```bash
 # Check NATS server is running
-docker ps | grep nats
+docker ps | grep rxdb-nats
 
 # Verify JetStream is enabled
 curl http://localhost:8222/jsz
