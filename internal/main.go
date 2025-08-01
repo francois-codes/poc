@@ -5,11 +5,12 @@ import (
 	"cognyx/psychic-robot/persistence/db"
 	"cognyx/psychic-robot/persistence/repository"
 	"context"
-	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const GENERATE = false
@@ -100,7 +101,7 @@ func main() {
 }
 
 func InitDB() *pgxpool.Pool {
-	dsn := "postgres://cognyx:cognyx@localhost:5432/cognyx"
+	dsn := "postgres://postgres:postgres@localhost:5432/poc"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
