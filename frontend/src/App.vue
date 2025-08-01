@@ -2,7 +2,6 @@
 import type { RxCollection, RxDatabase } from "rxdb";
 import { createRxDatabase } from "rxdb";
 import { addRxPlugin } from 'rxdb/plugins/core';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { replicateNats, RxNatsReplicationState } from "rxdb/plugins/replication-nats";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
@@ -61,7 +60,7 @@ const usersStore = ref<User[]>([]);
 async function initRxDB() {
   try {
     logMessage("🔧 Creating RxDB database...");
-    addRxPlugin(RxDBDevModePlugin);
+    // addRxPlugin(RxDBDevModePlugin);
     addRxPlugin(RxDBQueryBuilderPlugin)
 
     const storage = wrappedValidateAjvStorage({ storage: getRxStorageDexie() })
@@ -70,7 +69,6 @@ async function initRxDB() {
       name: "usersdb_nats",
       storage,
       multiInstance: true,
-      ignoreDuplicate: true,
     });
 
     
@@ -80,10 +78,8 @@ async function initRxDB() {
     });
 
     // Set up reactive UI updates
-    usersCollection.value?.users.find()
-      .where("_deleted")
-      .ne(true)
-      .$.subscribe((users) => {
+    usersCollection.value?.users.find().$.subscribe((users) => {
+      console.log("users", { users })
         usersStore.value = users.map(doc => doc.toJSON() as User);
       });
 
