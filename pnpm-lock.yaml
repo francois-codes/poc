@@ -10,6 +10,9 @@ importers:
 
   frontend:
     dependencies:
+      nats.ws:
+        specifier: ^1.30.3
+        version: 1.30.3
       rxdb:
         specifier: ^16.16.0
         version: 16.16.0(rxjs@7.8.2)
@@ -2557,6 +2560,12 @@ packages:
     hasBin: true
     dev: true
 
+  /nats.ws@1.30.3:
+    resolution: {integrity: sha512-aM77V2SEc+B6lbxCMZK3qfRy4jg8pmHj+wZzQKDiDIQYhLPj6U2NSHHBex0syj72Ayzl4uR5Lp3aKXTaVLbRpw==}
+    optionalDependencies:
+      nkeys.js: 1.1.0
+    dev: false
+
   /nats@2.29.3:
     resolution: {integrity: sha512-tOQCRCwC74DgBTk4pWZ9V45sk4d7peoE2njVprMRCBXrhJ5q5cYM7i6W+Uvw2qUrcfOSnuisrX7bEx3b3Wx4QA==}
     engines: {node: '>= 14.0.0'}
@@ -3021,6 +3030,7 @@ packages:
 
   /tweetnacl@1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
+    requiresBuild: true
     dev: false
 
   /typescript@5.8.3:
