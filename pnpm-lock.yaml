@@ -13,9 +13,6 @@ importers:
       axios:
         specifier: ^1.11.0
         version: 1.11.0
-      nats.ws:
-        specifier: ^1.30.3
-        version: 1.30.3
       rxdb:
         specifier: ^16.16.0
         version: 16.16.0(rxjs@7.8.2)
@@ -3073,12 +3070,6 @@ packages:
 
   /napi-build-utils@2.0.0:
     resolution: {integrity: sha512-GEbrYkbfF7MoNaoh2iGG84Mnf/WZfB0GdGEsM8wz7Expx/LlWf5U8t9nvJKXSp3qr5IsEbK04cBGhol/KwOsWA==}
-    dev: false
-
-  /nats.ws@1.30.3:
-    resolution: {integrity: sha512-aM77V2SEc+B6lbxCMZK3qfRy4jg8pmHj+wZzQKDiDIQYhLPj6U2NSHHBex0syj72Ayzl4uR5Lp3aKXTaVLbRpw==}
-    optionalDependencies:
-      nkeys.js: 1.1.0
     dev: false
 
   /nats@2.29.3:
