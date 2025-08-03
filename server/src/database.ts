@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
+import { dirname, join } from 'path';
 import { userSchema, type User } from 'types';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
 // Define database row type
 interface UserRow {
@@ -130,7 +130,7 @@ export const userDb = {
   },
 
   // Update user
-  update: (id: string, userData: Partial<Omit<User, 'id' | 'created_at' | 'updated_at' | '_deleted'>>): User | null => {
+  update: (id: string, userData: User): User | null => {
     const existingUser = userDb.getById(id);
     if (!existingUser) return null;
 
@@ -142,6 +142,11 @@ export const userDb = {
 
     // Validate with Zod schema
     const validatedUser = userSchema.parse(updatedUser);
+
+    if (validatedUser._deleted) {
+      softDeleteUser.run(new Date().toISOString(), id);
+      return validatedUser;
+    }
 
     updateUser.run(
       validatedUser.email,
