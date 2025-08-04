@@ -14,9 +14,11 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
-    "nats.ws": "^1.30.3",
+    "axios": "^1.11.0",
     "rxdb": "^16.16.0",
     "rxjs": "^7.8.2",
+    "socket.io-client": "^4.8.1",
+    "types": "workspace:^",
     "vue": "^3.5.18"
   },
   "devDependencies": {
