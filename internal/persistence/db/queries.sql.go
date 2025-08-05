@@ -7,107 +7,38 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countUsers = `-- name: CountUsers :one
-SELECT COUNT(*) FROM users
-`
-
-func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countUsers)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const createDatamodel = `-- name: CreateDatamodel :one
-INSERT INTO datamodel (name)
-VALUES ($1)
-    RETURNING id, name
-`
-
-func (q *Queries) CreateDatamodel(ctx context.Context, name string) (Datamodel, error) {
-	row := q.db.QueryRow(ctx, createDatamodel, name)
-	var i Datamodel
-	err := row.Scan(&i.ID, &i.Name)
-	return i, err
-}
-
 const createUser = `-- name: CreateUser :one
-
-INSERT INTO users (email, status, role)
-VALUES ($1, $2, $3)
-RETURNING id, email, status, role, created_at
+INSERT INTO users (id, name, email, roles)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, email, roles, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email  string      `json:"email"`
-	Status string      `json:"status"`
-	Role   pgtype.Text `json:"role"`
+	ID    string   `json:"id"`
+	Name  string   `json:"name"`
+	Email string   `json:"email"`
+	Roles []string `json:"roles"`
 }
 
-// CRUD Operations for Users
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.Status, arg.Role)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.ID,
+		arg.Name,
+		arg.Email,
+		arg.Roles,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
-		&i.Status,
-		&i.Role,
+		&i.Roles,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const createVersion = `-- name: CreateVersion :one
-INSERT INTO version (object_type, object_id, json, version, action, actor, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, NOW())
-RETURNING id, object_type, object_id, json, version, action, actor, created_at
-`
-
-type CreateVersionParams struct {
-	ObjectType string `json:"object_type"`
-	ObjectID   int64  `json:"object_id"`
-	Json       []byte `json:"json"`
-	Version    int32  `json:"version"`
-	Action     string `json:"action"`
-	Actor      string `json:"actor"`
-}
-
-func (q *Queries) CreateVersion(ctx context.Context, arg CreateVersionParams) (Version, error) {
-	row := q.db.QueryRow(ctx, createVersion,
-		arg.ObjectType,
-		arg.ObjectID,
-		arg.Json,
-		arg.Version,
-		arg.Action,
-		arg.Actor,
-	)
-	var i Version
-	err := row.Scan(
-		&i.ID,
-		&i.ObjectType,
-		&i.ObjectID,
-		&i.Json,
-		&i.Version,
-		&i.Action,
-		&i.Actor,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const deleteDatamodel = `-- name: DeleteDatamodel :exec
-DELETE FROM datamodel
-WHERE id = $1
-`
-
-func (q *Queries) DeleteDatamodel(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteDatamodel, id)
-	return err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
@@ -115,114 +46,13 @@ DELETE FROM users
 WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
 
-const filterUsers = `-- name: FilterUsers :many
-SELECT id, email, status, role, created_at FROM users
-WHERE (CASE WHEN $3::bool THEN email = $4 ELSE TRUE END)
-  AND (CASE WHEN $5::bool THEN email LIKE $4 ELSE TRUE END)
-  AND (CASE WHEN $6::text IS NOT NULL THEN status = $6 ELSE TRUE END)
-  AND (CASE WHEN $7::text IS NOT NULL THEN role = $7 ELSE TRUE END)
-ORDER BY
-    CASE WHEN $8::bool THEN email END asc,
-    CASE WHEN $9::bool THEN email END desc,
-    CASE WHEN $10::bool THEN status END asc,
-    CASE WHEN $11::bool THEN status END desc
-LIMIT $1 OFFSET $2
-`
-
-type FilterUsersParams struct {
-	Limit      int32  `json:"limit"`
-	Offset     int32  `json:"offset"`
-	IsEmail    bool   `json:"is_email"`
-	Email      string `json:"email"`
-	LikeEmail  bool   `json:"like_email"`
-	Status     string `json:"status"`
-	Role       string `json:"role"`
-	EmailAsc   bool   `json:"email_asc"`
-	EmailDesc  bool   `json:"email_desc"`
-	StatusAsc  bool   `json:"status_asc"`
-	StatusDesc bool   `json:"status_desc"`
-}
-
-func (q *Queries) FilterUsers(ctx context.Context, arg FilterUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, filterUsers,
-		arg.Limit,
-		arg.Offset,
-		arg.IsEmail,
-		arg.Email,
-		arg.LikeEmail,
-		arg.Status,
-		arg.Role,
-		arg.EmailAsc,
-		arg.EmailDesc,
-		arg.StatusAsc,
-		arg.StatusDesc,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Email,
-			&i.Status,
-			&i.Role,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getDatamodel = `-- name: GetDatamodel :one
-SELECT json
-FROM version
-WHERE object_id = $1 AND object_type = 'datamodel'
-ORDER BY version DESC
-LIMIT 1
-`
-
-func (q *Queries) GetDatamodel(ctx context.Context, objectID int64) ([]byte, error) {
-	row := q.db.QueryRow(ctx, getDatamodel, objectID)
-	var json []byte
-	err := row.Scan(&json)
-	return json, err
-}
-
-const getUser = `-- name: GetUser :one
-SELECT id, email, status, role, created_at
-FROM users
-WHERE id = $1
-`
-
-func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUser, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Status,
-		&i.Role,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, status, role, created_at
-FROM users
+SELECT id, name, email, roles, created_at, updated_at FROM users
 WHERE email = $1
 `
 
@@ -231,168 +61,47 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
-		&i.Status,
-		&i.Role,
+		&i.Roles,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getVersionByID = `-- name: GetVersionByID :one
-SELECT id, object_type, object_id, json, version, action, actor, created_at
-FROM version
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, name, email, roles, created_at, updated_at FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetVersionByID(ctx context.Context, id int64) (Version, error) {
-	row := q.db.QueryRow(ctx, getVersionByID, id)
-	var i Version
+func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.ObjectType,
-		&i.ObjectID,
-		&i.Json,
-		&i.Version,
-		&i.Action,
-		&i.Actor,
+		&i.Name,
+		&i.Email,
+		&i.Roles,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const listDatamodels = `-- name: ListDatamodels :many
-SELECT id, name
-FROM datamodel
-ORDER BY id
-`
-
-func (q *Queries) ListDatamodels(ctx context.Context) ([]Datamodel, error) {
-	rows, err := q.db.Query(ctx, listDatamodels)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Datamodel
-	for rows.Next() {
-		var i Datamodel
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, status, role, created_at
-FROM users
+SELECT id, name, email, roles, created_at, updated_at FROM users
 ORDER BY created_at DESC
-`
-
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Email,
-			&i.Status,
-			&i.Role,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listVersionsByObject = `-- name: ListVersionsByObject :many
-SELECT id, object_type, object_id, json, version, action, actor, created_at
-FROM version
-WHERE object_type = $1 AND object_id = $2
-ORDER BY version DESC
-`
-
-type ListVersionsByObjectParams struct {
-	ObjectType string `json:"object_type"`
-	ObjectID   int64  `json:"object_id"`
-}
-
-func (q *Queries) ListVersionsByObject(ctx context.Context, arg ListVersionsByObjectParams) ([]Version, error) {
-	rows, err := q.db.Query(ctx, listVersionsByObject, arg.ObjectType, arg.ObjectID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Version
-	for rows.Next() {
-		var i Version
-		if err := rows.Scan(
-			&i.ID,
-			&i.ObjectType,
-			&i.ObjectID,
-			&i.Json,
-			&i.Version,
-			&i.Action,
-			&i.Actor,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const searchUsers = `-- name: SearchUsers :many
-SELECT id, email, status, role, created_at FROM users
-WHERE ($3::text IS NULL OR email = $3)
-  AND ($4::text IS NULL OR status = $4)
-  AND ($5::text IS NULL OR role = $5)
-ORDER BY
-    CASE
-        WHEN $6::text = 'email' THEN email
-        WHEN $6::text = 'created_at' THEN created_at
-        WHEN $6::text = 'role' THEN role
-        ELSE id
-        END
 LIMIT $1 OFFSET $2
 `
 
-type SearchUsersParams struct {
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
-	Email   string `json:"email"`
-	Status  string `json:"status"`
-	Role    string `json:"role"`
-	Orderby string `json:"orderby"`
+type ListUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, searchUsers,
-		arg.Limit,
-		arg.Offset,
-		arg.Email,
-		arg.Status,
-		arg.Role,
-		arg.Orderby,
-	)
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -402,10 +111,11 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]Use
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.Name,
 			&i.Email,
-			&i.Status,
-			&i.Role,
+			&i.Roles,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -415,105 +125,40 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]Use
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateDatamodel = `-- name: UpdateDatamodel :one
-UPDATE datamodel
-SET name = $2
-WHERE id = $1
-    RETURNING id, name
-`
-
-type UpdateDatamodelParams struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-func (q *Queries) UpdateDatamodel(ctx context.Context, arg UpdateDatamodelParams) (Datamodel, error) {
-	row := q.db.QueryRow(ctx, updateDatamodel, arg.ID, arg.Name)
-	var i Datamodel
-	err := row.Scan(&i.ID, &i.Name)
-	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET email = $2, status = $3, role = $4
+SET name = $2,
+    email = $3,
+    roles = $4,
+    updated_at = NOW()
 WHERE id = $1
-RETURNING id, email, status, role, created_at
+RETURNING id, name, email, roles, created_at, updated_at
 `
 
 type UpdateUserParams struct {
-	ID     int64       `json:"id"`
-	Email  string      `json:"email"`
-	Status string      `json:"status"`
-	Role   pgtype.Text `json:"role"`
+	ID    string   `json:"id"`
+	Name  string   `json:"name"`
+	Email string   `json:"email"`
+	Roles []string `json:"roles"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
+		arg.Name,
 		arg.Email,
-		arg.Status,
-		arg.Role,
+		arg.Roles,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Email,
-		&i.Status,
-		&i.Role,
+		&i.Roles,
 		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const updateUserRole = `-- name: UpdateUserRole :one
-UPDATE users
-SET role = $2
-WHERE id = $1
-RETURNING id, email, status, role, created_at
-`
-
-type UpdateUserRoleParams struct {
-	ID   int64       `json:"id"`
-	Role pgtype.Text `json:"role"`
-}
-
-func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUserRole, arg.ID, arg.Role)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Status,
-		&i.Role,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const updateUserStatus = `-- name: UpdateUserStatus :one
-UPDATE users
-SET status = $2
-WHERE id = $1
-RETURNING id, email, status, role, created_at
-`
-
-type UpdateUserStatusParams struct {
-	ID     int64  `json:"id"`
-	Status string `json:"status"`
-}
-
-func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUserStatus, arg.ID, arg.Status)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Status,
-		&i.Role,
-		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

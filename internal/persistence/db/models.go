@@ -6,30 +6,13 @@ package db
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Datamodel struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
 type User struct {
-	ID        int64       `json:"id"`
-	Email     string      `json:"email"`
-	Status    string      `json:"status"`
-	Role      pgtype.Text `json:"role"`
-	CreatedAt time.Time   `json:"created_at"`
-}
-
-type Version struct {
-	ID         int64     `json:"id"`
-	ObjectType string    `json:"object_type"`
-	ObjectID   int64     `json:"object_id"`
-	Json       []byte    `json:"json"`
-	Version    int32     `json:"version"`
-	Action     string    `json:"action"`
-	Actor      string    `json:"actor"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Roles     []string  `json:"roles"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

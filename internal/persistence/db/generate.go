@@ -1,21 +1,12 @@
 package db
 
-import (
-	"context"
-	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/tidwall/randjson"
-	"log"
-	"sync"
-	"time"
-)
-
 const (
 	totalDatamodels      = 1000
 	versionsPerDatamodel = 10000
 	numWorkers           = 100
 )
 
+/*
 func Generate(dbpool *pgxpool.Pool) {
 	ctx := context.Background()
 	log.Printf("🚀 Inserting %d datamodels + %d versions using %d workers...\n", totalDatamodels, totalDatamodels*versionsPerDatamodel, numWorkers)
@@ -143,3 +134,6 @@ func Generate2(dbpool *pgxpool.Pool) {
 
 	log.Printf("✅ Done in %s", time.Since(start))
 }
+
+
+*/
